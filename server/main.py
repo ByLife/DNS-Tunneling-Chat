@@ -98,4 +98,16 @@ def send_message_history(sock, addr):
         message_json = json.dumps({'sender': sender, 'message': content})
         encoded_message = encode_data(message_json)
         qname = f"{encoded_message}.bylife.fr"
-        reply = DNSRecord(DNSHeader(qr=1, aa
+        reply = DNSRecord(DNSHeader(qr=1, aa=1, ra=1), q=DNSQuestion(qname))
+        reply.add_answer(RR(qname, QTYPE.A, rdata=A("212.227.26.128"), ttl=60))
+        sock.sendto(reply.pack(), addr)
+
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+sock.bind((DNS_IP, DNS_PORT))
+
+print(f"DNS server listening on {DNS_IP}:{DNS_PORT}")
+
+while True:
+    data, addr = sock.recvfrom(512)
+    print(f"Received data from {addr}, length: {len(data)}")
+    handle_request(data, addr, sock)
